@@ -1,0 +1,28 @@
+<main class="page-container">
+  <div class="page-heading d-flex flex-column flex-sm-row align-items-sm-end justify-content-between gap-3">
+    <div><div class="page-eyebrow">Estrutura do hotel</div><h1 class="h2 fw-bold mt-2 mb-1">Espaços</h1><p class="text-secondary mb-0">Gerencie os ambientes disponíveis para receber eventos.</p></div>
+    <% if user_signed_in? %><%= link_to "＋ Adicionar espaço", new_room_path, class: "btn btn-primary" %><% end %>
+  </div>
+
+  <section class="card content-card mb-3"><div class="card-body d-flex align-items-center justify-content-between py-3"><div><div class="fw-semibold">Espaços cadastrados</div><div class="small text-secondary">Visão geral dos ambientes do hotel</div></div><span class="badge text-bg-light border fs-6"><%= @rooms.size %></span></div></section>
+
+  <% if @rooms.empty? %>
+    <section class="card empty-state text-center"><div class="card-body py-5 px-3"><div class="display-5 text-primary mb-3" aria-hidden="true">⌂</div><h2 class="h5 fw-bold">Nenhum espaço por aqui ainda</h2><p class="text-secondary mx-auto" style="max-width: 28rem">Adicione o primeiro ambiente para começar a organizar os espaços do hotel.</p><% if user_signed_in? %><%= link_to "Cadastrar primeiro espaço", new_room_path, class: "btn btn-primary mt-2" %><% end %></div></section>
+  <% else %>
+    <div class="row g-4">
+      <% @rooms.each do |room| %>
+        <div class="col-md-6 col-xl-4">
+          <article class="card room-card h-100 overflow-hidden">
+            <div class="room-banner d-flex align-items-end p-4 text-white"><span class="badge text-bg-light text-primary">Espaço para eventos</span></div>
+            <div class="card-body p-4 d-flex flex-column">
+              <h2 class="h5 fw-bold"><%= link_to room.name, room, class: "link-dark link-underline-opacity-0 link-underline-opacity-75-hover" %></h2>
+              <p class="text-secondary small flex-grow-1"><%= room.description.presence || "Espaço disponível para eventos e recepções." %></p>
+              <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-light border"><%= room.capacity %> pessoas</span><% if room.hourly_rate.present? %><span class="badge text-bg-success">R$ <%= number_with_precision(room.hourly_rate, precision: 2, delimiter: ".", separator: ",") %> / hora</span><% end %><% if room.daily_rate.present? %><span class="badge text-bg-light border">R$ <%= number_with_precision(room.daily_rate, precision: 2, delimiter: ".", separator: ",") %> / diária</span><% end %></div>
+              <div class="d-flex align-items-center gap-2 border-top pt-3"><%= link_to "Ver detalhes", room, class: "btn btn-outline-primary btn-sm flex-grow-1" %><% if user_signed_in? %><%= link_to "Editar", edit_room_path(room), class: "btn btn-outline-secondary btn-sm" %><%= button_to "Excluir", room_path(room), method: :delete, data: { turbo_confirm: "Tem certeza que deseja remover #{room.name}?" }, class: "btn btn-outline-danger btn-sm" %><% end %></div>
+            </div>
+          </article>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</main>

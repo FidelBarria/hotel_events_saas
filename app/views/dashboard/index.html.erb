@@ -1,0 +1,60 @@
+<% content_for :title, "Painel" %>
+<main class="page-container">
+  <section class="card hero-panel mb-4">
+    <div class="card-body p-4 p-lg-5 position-relative">
+      <div class="page-eyebrow text-white-50">Painel de controle</div>
+      <div class="row align-items-end g-4 mt-1">
+        <div class="col-lg"><h1 class="display-6 fw-bold mb-2">Olá, <%= current_user.name.presence || "usuário" %></h1><p class="text-white-50 mb-0">Acompanhe a ocupação dos espaços e a programação de eventos.</p></div>
+        <div class="col-lg-auto d-flex gap-2"><%= link_to "Ver espaços", rooms_path, class: "btn btn-light" %><%= link_to "Novo evento", new_event_path, class: "btn btn-outline-light" %></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row g-3 mb-4" aria-label="Resumo da operação">
+    <div class="col-md-4"><article class="card stat-card h-100"><div class="card-body p-4"><div class="text-secondary small">Total de salas</div><div class="stat-value mt-2"><%= @total_rooms %></div><div class="small text-secondary mt-3"><%= link_to "Gerenciar salas", rooms_path, class: "link-primary text-decoration-none" %></div></div></article></div>
+    <div class="col-md-4"><article class="card stat-card h-100"><div class="card-body p-4"><div class="text-secondary small">Eventos hoje</div><div class="stat-value mt-2"><%= @events_today %></div><div class="small text-secondary mt-3">Eventos com reserva confirmada</div></div></article></div>
+    <div class="col-md-4"><article class="card stat-card h-100"><div class="card-body p-4"><div class="text-secondary small">Eventos pendentes</div><div class="stat-value mt-2"><%= @pending_events %></div><div class="small text-secondary mt-3">Aguardando confirmação</div></div></article></div>
+  </section>
+
+  <section class="card content-card">
+    <div class="card-header bg-white d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 p-3 p-lg-4">
+      <div><div class="page-eyebrow">Agenda das salas</div><h2 class="h5 fw-bold mt-1 mb-0">Semana de <%= @week_start.strftime("%d/%m") %> a <%= @week_end.strftime("%d/%m/%Y") %></h2></div>
+      <nav class="btn-group" aria-label="Navegar entre semanas"><%= link_to "← Semana anterior", root_path(week: (@week_start - 7.days).iso8601, statuses: @selected_statuses), class: "btn btn-outline-secondary btn-sm" %><%= link_to "Esta semana", root_path(week: @week_start.iso8601, statuses: @selected_statuses), class: "btn btn-outline-primary btn-sm" %><%= link_to "Próxima semana →", root_path(week: (@week_start + 7.days).iso8601, statuses: @selected_statuses), class: "btn btn-outline-secondary btn-sm" %></nav>
+    </div>
+    <div class="card-body border-bottom py-3">
+      <%= form_with url: root_path, method: :get, local: true, class: "d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3" do %>
+        <%= hidden_field_tag :week, @week_start.iso8601 %>
+        <fieldset class="d-flex flex-wrap align-items-center gap-3 border-0 p-0 m-0">
+          <legend class="float-none w-auto fs-6 fw-semibold mb-0 me-1">Filtrar status:</legend>
+          <%= hidden_field_tag "statuses[]", "" %>
+          <% Booking::STATUSES.each do |status| %>
+            <div class="form-check mb-0">
+              <%= check_box_tag "statuses[]", status, @selected_statuses.include?(status), id: "calendar_status_#{status}", class: "form-check-input" %>
+              <%= label_tag "calendar_status_#{status}", status.humanize, class: "form-check-label" %>
+            </div>
+          <% end %>
+        </fieldset>
+        <%= submit_tag "Aplicar filtros", class: "btn btn-outline-primary btn-sm align-self-start align-self-lg-center" %>
+      <% end %>
+    </div>
+    <div class="calendar-scroll">
+      <table class="table table-bordered calendar-table mb-0">
+        <thead><tr><th scope="col" class="calendar-room-col">Sala</th><% @calendar_days.each do |day| %><th scope="col"><span class="d-block text-secondary small"><%= ["", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][day.cwday] %></span><span><%= day.strftime("%d/%m") %></span></th><% end %></tr></thead>
+        <tbody>
+          <% if @rooms.any? %>
+            <% @rooms.each do |room| %>
+              <tr><th scope="row" class="calendar-room-col"><span class="fw-semibold"><%= room.name %></span><span class="d-block small text-secondary"><%= room.capacity %> pessoas</span></th>
+                <% @calendar_days.each do |day| %>
+                  <td><% bookings = @bookings_by_room_and_day[[room.id, day]] %><% if bookings.any? %><div class="d-flex flex-column gap-1"><% bookings.each do |booking| %><div class="calendar-event calendar-event--<%= booking.status %>" title="<%= booking.event.title %> · <%= booking.status.humanize %>"><%= link_to booking.event.title, event_path(booking.event), class: "link-dark text-decoration-underline", aria: { label: "Ver detalhes do evento #{booking.event.title}" } %><span class="d-block fw-normal"><%= booking.status.humanize %></span><%= link_to "Editar", edit_event_path(booking.event), class: "d-inline-block mt-1 small fw-semibold", aria: { label: "Editar evento #{booking.event.title}" } %></div><% end %></div><% else %><span class="text-body-tertiary">—</span><% end %></td>
+                <% end %>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr><td colspan="8" class="py-5 text-center text-secondary">Cadastre uma sala para visualizar a agenda.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer bg-white small text-secondary">A agenda exibe os eventos dos status selecionados. Um evento que ocupa mais de um dia aparece em cada dia da reserva.</div>
+  </section>
+</main>

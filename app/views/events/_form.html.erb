@@ -1,0 +1,18 @@
+<%= form_with(model: event) do |form| %>
+  <% if event.errors.any? %>
+    <div class="alert alert-danger"><h2 class="h6"><%= pluralize(event.errors.count, "erro") %> impediram salvar:</h2><ul class="mb-0"><% event.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul></div>
+  <% end %>
+
+  <div class="row g-3">
+    <div class="col-12"><%= form.label :client_id, "Cliente cadastrado", class: "form-label" %><%= form.collection_select :client_id, @clients, :id, ->(client) { [client.name, client.formatted_cnpj].compact_blank.join(" · ") }, { prompt: "Selecione o cliente" }, class: "form-select", required: true %><div class="form-text">Selecione um cliente cadastrado para vincular este evento.</div></div>
+    <div class="col-12"><%= form.label :title, "Nome do evento", class: "form-label" %><%= form.text_field :title, autofocus: true, required: true, class: "form-control", placeholder: "Ex.: Convenção anual" %></div>
+    <div class="col-md-6"><%= form.label :requester_name, "Quem solicitou", class: "form-label" %><%= form.text_field :requester_name, required: true, class: "form-control", placeholder: "Nome do solicitante" %></div>
+    <div class="col-md-6"><%= form.label :requester_phone, "Telefone do solicitante", class: "form-label" %><%= form.telephone_field :requester_phone, required: true, class: "form-control", placeholder: "(00) 00000-0000" %></div>
+    <div class="col-md-6"><%= form.label :requester_email, "E-mail do solicitante", class: "form-label" %><%= form.email_field :requester_email, required: true, class: "form-control", placeholder: "nome@empresa.com" %></div>
+    <div class="col-md-3"><%= form.label :attendee_count, "Quantidade de pessoas", class: "form-label" %><%= form.number_field :attendee_count, min: 1, step: 1, required: true, class: "form-control", placeholder: "Ex.: 80" %></div>
+    <div class="col-md-3"><%= form.label :setup_format, "Formato de montagem", class: "form-label" %><%= form.select :setup_format, Event::SETUP_FORMATS.map { |value, label| [label, value] }, { prompt: "Selecione" }, class: "form-select", required: true %></div>
+    <div class="col-12"><%= form.label :description, "Observações", class: "form-label" %><%= form.text_area :description, rows: 3, class: "form-control", placeholder: "Informações iniciais sobre o evento (opcional)" %></div>
+  </div>
+
+  <div class="d-flex flex-column-reverse flex-sm-row justify-content-end gap-2 border-top pt-3 mt-4"><%= link_to "Cancelar", events_path, class: "btn btn-outline-secondary" %><%= form.submit(event.persisted? ? "Salvar dados" : "Continuar para programação", class: "btn btn-primary") %></div>
+<% end %>

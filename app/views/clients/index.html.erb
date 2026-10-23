@@ -1,0 +1,32 @@
+<% content_for :title, "Clientes" %>
+<main class="page-container">
+  <div class="page-heading d-flex flex-column flex-sm-row align-items-sm-end justify-content-between gap-3">
+    <div><div class="page-eyebrow">Relacionamento</div><h1 class="h2 fw-bold mt-2 mb-1">Clientes</h1><p class="text-secondary mb-0"><%= @total_clients %> cliente(s) cadastrado(s). A lista mostra até 20 por página.</p></div>
+    <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#clientSearchModal">Pesquisar cliente</button><%= link_to "Novo cliente", new_client_path, class: "btn btn-primary" %></div>
+  </div>
+
+  <% if @clients.any? %>
+    <div class="card content-card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Cliente</th><th>CNPJ</th><th>Contato</th><th class="text-end">Ações</th></tr></thead><tbody>
+      <% @clients.each do |client| %><tr><td><div class="fw-semibold"><%= client.name %></div><div class="small text-secondary"><%= client.email %></div></td><td><%= client.formatted_cnpj.presence || "—" %></td><td><%= client.phone.presence || "—" %></td><td class="text-end text-nowrap"><%= link_to "Abrir", client, class: "btn btn-sm btn-outline-primary" %><%= link_to "Editar", edit_client_path(client), class: "btn btn-sm btn-outline-secondary ms-1" %></td></tr><% end %>
+    </tbody></table></div></div>
+    <% if @total_pages > 1 %><nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Paginação de clientes"><span class="small text-secondary">Página <%= @page %> de <%= @total_pages %></span><div class="btn-group"><%= link_to "Anterior", clients_path(page: [@page - 1, 1].max), class: "btn btn-outline-secondary btn-sm #{'disabled' if @page == 1}" %><%= link_to "Próxima", clients_path(page: [@page + 1, @total_pages].min), class: "btn btn-outline-secondary btn-sm #{'disabled' if @page == @total_pages}" %></div></nav><% end %>
+  <% else %><section class="card empty-state text-center"><div class="card-body py-5"><h2 class="h5 fw-bold">Nenhum cliente cadastrado</h2><p class="text-secondary">Cadastre clientes para vinculá-los aos eventos.</p><%= link_to "Cadastrar primeiro cliente", new_client_path, class: "btn btn-primary" %></div></section><% end %>
+</main>
+
+<div class="modal fade" id="clientSearchModal" tabindex="-1" aria-labelledby="clientSearchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header"><div><h2 class="modal-title fs-5 fw-bold" id="clientSearchModalLabel">Pesquisar cliente</h2><p class="small text-secondary mb-0">Busque por nome ou CNPJ sem carregar toda a base.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+    <div class="modal-body">
+      <%= form_with url: clients_path, method: :get, data: { turbo_frame: "client_search_results" }, class: "input-group mb-3" do |form| %><%= form.search_field :q, value: @search_term, class: "form-control", placeholder: "Nome do cliente ou CNPJ", aria: { label: "Nome do cliente ou CNPJ" }, autofocus: true %><%= form.submit "Buscar", class: "btn btn-primary" %><% end %>
+      <turbo-frame id="client_search_results">
+        <% if @search_term.blank? %><div class="rounded-3 bg-light p-4 text-center text-secondary">Digite um nome ou CNPJ para pesquisar.</div>
+        <% elsif @search_results&.any? %>
+          <p class="small text-secondary"><%= @search_total %> resultado(s) encontrado(s).</p><div class="list-group">
+            <% @search_results.each do |client| %><div class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2"><div><div class="fw-semibold"><%= client.name %></div><div class="small text-secondary"><%= [client.formatted_cnpj, client.email].compact_blank.join(" · ") %></div></div><%= link_to "Abrir cadastro", client_path(client), class: "btn btn-sm btn-outline-primary", data: { turbo_frame: "_top" } %></div><% end %>
+          </div>
+          <% if @search_total_pages > 1 %><div class="d-flex justify-content-between align-items-center mt-3"><span class="small text-secondary">Página <%= @search_page %> de <%= @search_total_pages %></span><div class="btn-group"><%= link_to "Anterior", clients_path(q: @search_term, search_page: [@search_page - 1, 1].max), class: "btn btn-outline-secondary btn-sm", data: { turbo_frame: "client_search_results" } %><%= link_to "Próxima", clients_path(q: @search_term, search_page: [@search_page + 1, @search_total_pages].min), class: "btn btn-outline-secondary btn-sm", data: { turbo_frame: "client_search_results" } %></div></div><% end %>
+        <% else %><div class="rounded-3 bg-light p-4 text-center text-secondary">Nenhum cliente encontrado para “<%= @search_term %>”.</div><% end %>
+      </turbo-frame>
+    </div>
+  </div></div>
+</div>

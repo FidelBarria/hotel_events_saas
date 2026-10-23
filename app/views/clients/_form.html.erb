@@ -1,0 +1,10 @@
+<%= form_with(model: client, url: client.persisted? ? client_path(client) : clients_path) do |form| %>
+  <% if client.errors.any? %><div class="alert alert-danger"><h2 class="h6"><%= pluralize(client.errors.count, "erro") %> impediram salvar o cliente:</h2><ul class="mb-0"><% client.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul></div><% end %>
+  <div class="row g-3">
+    <div class="col-md-8"><%= form.label :name, "Nome do cliente ou empresa", class: "form-label" %><%= form.text_field :name, autofocus: true, required: true, class: "form-control", placeholder: "Nome para identificar o cliente" %></div>
+    <div class="col-md-4"><%= form.label :cnpj, "CNPJ", class: "form-label" %><%= form.text_field :cnpj, class: "form-control", inputmode: "numeric", maxlength: 18, placeholder: "00.000.000/0000-00" %><div class="form-text">Opcional. Aceita com ou sem pontuação.</div></div>
+    <div class="col-md-6"><%= form.label :email, "E-mail", class: "form-label" %><%= form.email_field :email, class: "form-control", placeholder: "contato@empresa.com" %></div>
+    <div class="col-md-6"><%= form.label :phone, "Telefone", class: "form-label" %><%= form.telephone_field :phone, class: "form-control", placeholder: "(00) 00000-0000" %></div>
+  </div>
+  <div class="d-flex flex-column-reverse flex-sm-row justify-content-end gap-2 border-top pt-3 mt-4"><%= link_to "Cancelar", clients_path, class: "btn btn-outline-secondary" %><%= form.submit(client.persisted? ? "Salvar alterações" : "Cadastrar cliente", class: "btn btn-primary") %></div>
+<% end %>
