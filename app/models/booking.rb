@@ -6,7 +6,15 @@ class Booking < ApplicationRecord
   has_many :services, through: :booking_services
   accepts_nested_attributes_for :booking_services, allow_destroy: true
 
-  STATUSES = %w[pendente confirmado cancelado].freeze
+  STATUSES = %w[cotacao pendente em_tentativa confirmado finalizado cancelado].freeze
+  STATUS_LABELS = {
+    "cotacao" => "Cotação",
+    "pendente" => "Pendente",
+    "em_tentativa" => "Em tentativa",
+    "confirmado" => "Confirmado",
+    "finalizado" => "Finalizado",
+    "cancelado" => "Cancelado"
+  }.freeze
   ROOM_RATE_TYPES = { "hourly" => "Por hora", "daily" => "Diária" }.freeze
 
   validates :start_time, :end_time, presence: true
@@ -36,6 +44,10 @@ class Booking < ApplicationRecord
     (room_rate || 0) * room_rate_units
   end
 
+  def status_label
+    STATUS_LABELS.fetch(status, status&.humanize)
+  end
+
   private
 
   def end_time_must_be_after_start_time
@@ -45,11 +57,11 @@ class Booking < ApplicationRecord
   end
 
   def room_must_be_available
-    return if room_id.blank? || start_time.blank? || end_time.blank? || status != "confirmado"
+    return if room_id.blank? || start_time.blank? || end_time.blank? || !%w[confirmado finalizado].include?(status)
     return unless end_time > start_time
 
     conflicts = Booking.where(room_id: room_id)
-      .where(status: "confirmado")
+      .where(status: %w[confirmado finalizado])
       .where("start_time < :end_time AND end_time > :start_time", start_time: start_time, end_time: end_time)
     conflicts = conflicts.where.not(id: id) if persisted?
 

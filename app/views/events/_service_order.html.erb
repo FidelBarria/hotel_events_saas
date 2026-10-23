@@ -1,0 +1,68 @@
+<section class="service-order-document print-only">
+  <header class="service-order-header">
+    <div class="service-order-brand">Hotel Events</div>
+    <div class="service-order-label">Ordem de serviço · uso interno</div>
+    <h1><%= @event.title %></h1>
+    <p>Emitida em <%= l(Date.current, format: :long) %></p>
+  </header>
+
+  <section class="service-order-section">
+    <h2>Resumo do evento</h2>
+    <div class="service-order-grid">
+      <div><strong>Cliente</strong><span><%= @event.client&.name.presence || @event.client&.email || "Não informado" %></span></div>
+      <div><strong>Solicitante</strong><span><%= @event.requester_name %></span></div>
+      <div><strong>Contato</strong><span><%= [@event.requester_phone, @event.requester_email].compact_blank.join(" · ").presence || "Não informado" %></span></div>
+      <div><strong>Participantes</strong><span><%= @event.attendee_count %></span></div>
+      <div><strong>Formato de montagem</strong><span><%= Event::SETUP_FORMATS[@event.setup_format] %></span></div>
+      <div><strong>Status</strong><span><%= @booking_entries.reject { |_key, booking| booking.marked_for_destruction? }.map { |_key, booking| booking.status_label }.uniq.join(", ").presence || "Programação pendente" %></span></div>
+    </div>
+    <div class="service-order-note"><strong>Observações do evento</strong><p><%= @event.description.presence || "Nenhuma observação informada." %></p></div>
+  </section>
+
+  <section class="service-order-section">
+    <h2>Salas, datas e horários</h2>
+    <table class="service-order-table"><thead><tr><th>Sala</th><th>Período reservado</th><th>Dia e horário do evento</th><th>Formato</th><th>Status</th><th>Tarifa</th><th>Total da sala</th></tr></thead><tbody>
+      <% @booking_entries.each do |_key, booking| %>
+        <% next if booking.marked_for_destruction? %>
+        <% usages = booking.room_usages.order(:service_date).to_a %>
+        <tr>
+          <td><%= booking.room&.name || "A definir" %><% if booking.room&.description.present? %><small><%= booking.room.description %></small><% end %></td>
+          <td><%= booking.start_time&.to_date&.strftime("%d/%m/%Y") || "—" %> a <%= booking.end_time&.to_date&.strftime("%d/%m/%Y") || "—" %></td>
+          <td><% if usages.any? %><%= safe_join(usages.map { |usage| "#{usage.service_date.strftime('%d/%m/%Y')}: #{usage.start_time}–#{usage.end_time}" }, tag.br) %><% else %>Horário não informado<% end %></td>
+          <td><%= Event::SETUP_FORMATS[@event.setup_format] %></td>
+          <td><%= booking.status_label %></td>
+          <td><%= number_to_currency(booking.room_rate || 0, unit: "R$ ", separator: ",", delimiter: ".") %> <small><%= Booking::ROOM_RATE_TYPES[booking.room_rate_type] %></small></td>
+          <td><%= number_to_currency(booking.room_total, unit: "R$ ", separator: ",", delimiter: ".") %></td>
+        </tr>
+      <% end %>
+      <% if @booking_entries.none? { |_key, booking| !booking.marked_for_destruction? } %><tr><td colspan="7">Nenhuma sala programada.</td></tr><% end %>
+    </tbody></table>
+  </section>
+
+  <% [["A&B / Cozinha e serviço", "food_beverage", "Separe e prepare os itens abaixo para os horários e salas indicados."], ["Equipamentos / Audiovisual", "equipment", "Separe, teste e disponibilize os equipamentos abaixo nas salas e horários indicados."]].each do |department, category, instruction| %>
+    <section class="service-order-section">
+      <h2><%= department %></h2>
+      <p class="service-order-instruction"><%= instruction %></p>
+      <% lines = @service_lines.select { |line| line[:service].category == category } %>
+      <% if lines.any? %>
+        <table class="service-order-table"><thead><tr><th>Item</th><th>Quantidade</th><th>Valor unitário</th><th>Total</th><th>Dia e horário</th><th>Sala de atendimento</th><th>Conferência</th></tr></thead><tbody>
+          <% lines.sort_by { |line| [line[:service_date].to_s, line[:service_time].to_s] }.each do |line| %>
+            <% booking = @booking_entries.find { |booking_key, _item| booking_key == line[:booking_key] }&.last %>
+            <tr><td><%= line[:service].name %><small><%= Service::TYPE_LABELS[line[:service].service_type] %></small></td><td><%= line[:quantity] %></td><td><%= number_to_currency(line[:service].price, unit: "R$ ", separator: ",", delimiter: ".") %></td><td><%= number_to_currency(line[:service].price * line[:quantity], unit: "R$ ", separator: ",", delimiter: ".") %></td><td><%= line[:service_date].respond_to?(:strftime) ? line[:service_date].strftime("%d/%m/%Y") : line[:service_date] %> · <%= line[:service_time].presence || "Horário não informado" %></td><td><%= booking&.room&.name || "A definir" %></td><td class="service-order-check"></td></tr>
+          <% end %>
+        </tbody></table>
+      <% else %>
+        <p class="service-order-empty">Nenhum item deste departamento foi solicitado.</p>
+      <% end %>
+      <div class="service-order-signoff"><span>Responsável: __________________________________</span><span>Conferido em: ____/____/______</span></div>
+    </section>
+  <% end %>
+
+  <section class="service-order-section">
+    <h2>Eventos e montagem das salas</h2>
+    <p>Preparar as salas conforme o formato de montagem e a programação acima. Confirmar a disposição para <strong><%= @event.attendee_count %> participantes</strong> e sinalizar qualquer necessidade adicional antes do início.</p>
+    <div class="service-order-signoff"><span>Responsável: __________________________________</span><span>Montagem conferida: ____/____/______ às ____:____</span></div>
+  </section>
+
+  <footer class="service-order-footer">Documento operacional para distribuição às equipes do hotel. Emitido por <%= @event.user.name.presence || @event.user.email %>.</footer>
+</section>

@@ -1,0 +1,42 @@
+<% content_for :title, "Metas anuais" %>
+<% month_names = %w[Janeiro Fevereiro Março Abril Maio Junho Julho Agosto Setembro Outubro Novembro Dezembro] %>
+<main class="page-container">
+  <div class="page-heading d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+    <div><div class="page-eyebrow">Acompanhamento financeiro</div><h1 class="h2 fw-bold mt-2 mb-1">Metas anuais</h1><p class="text-secondary mb-0">Cadastre e consulte as metas mensais de salas, equipamentos, A&amp;B e receita total.</p></div>
+    <div class="d-flex align-items-center gap-2">
+      <%= link_to "← Ano anterior", monthly_goals_path(year: @year - 1), class: "btn btn-outline-secondary", aria: { label: "Ver metas de #{@year - 1}" } %>
+      <span class="fs-5 fw-bold px-2" aria-live="polite"><%= @year %></span>
+      <%= link_to "Próximo ano →", monthly_goals_path(year: @year + 1), class: "btn btn-outline-secondary", aria: { label: "Ver metas de #{@year + 1}" } %>
+    </div>
+  </div>
+
+  <section class="card content-card">
+    <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 p-3 p-lg-4">
+      <div><h2 class="h5 fw-bold mb-1">Planejamento de <%= @year %></h2><p class="small text-secondary mb-0">Preencha os valores desejados para cada mês. Deixe zero nos meses sem meta.</p></div>
+      <%= link_to "Voltar ao painel", root_path, class: "btn btn-outline-primary btn-sm" %>
+    </div>
+    <div class="card-body p-0">
+      <%= form_with url: monthly_goals_path(year: @year), method: :patch, local: true do %>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle annual-goals-table mb-0">
+            <thead class="table-light"><tr><th scope="col">Mês</th><th scope="col">Salas (R$)</th><th scope="col">Equipamentos (R$)</th><th scope="col">A&amp;B (R$)</th><th scope="col">Total (R$)</th></tr></thead>
+            <tbody>
+              <% @monthly_goals.each do |goal| %>
+                <% month_key = goal.month.strftime("%Y-%m") %>
+                <% month_name = month_names[goal.month.month - 1] %>
+                <tr>
+                  <th scope="row"><%= month_name %></th>
+                  <% [["rooms_target", goal.rooms_target, "Salas"], ["equipment_target", goal.equipment_target, "Equipamentos"], ["food_beverage_target", goal.food_beverage_target, "A&B"], ["total_target", goal.total_target, "Total"]].each do |field, value, label| %>
+                    <td><%= number_field_tag "goals[#{month_key}][#{field}]", value || 0, min: 0, step: 0.01, required: true, class: "form-control form-control-sm", aria: { label: "#{month_name} · #{label}" } %></td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot class="table-light fw-bold"><tr><th scope="row">Total anual</th><% [[:rooms_target, "Salas"], [:equipment_target, "Equipamentos"], [:food_beverage_target, "A&B"], [:total_target, "Total"]].each do |field, label| %><td><%= number_to_currency(@monthly_goals.sum { |goal| goal.public_send(field) || 0 }, unit: "R$ ", separator: ",", delimiter: ".") %></td><% end %></tr></tfoot>
+          </table>
+        </div>
+        <div class="d-flex justify-content-end p-3 p-lg-4"><%= submit_tag "Salvar metas de #{@year}", class: "btn btn-primary" %></div>
+      <% end %>
+    </div>
+  </section>
+</main>

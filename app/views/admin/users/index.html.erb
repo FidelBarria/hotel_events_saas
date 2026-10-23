@@ -1,0 +1,46 @@
+<% content_for :title, "Configurações de usuários" %>
+<main class="page-container">
+  <div class="page-heading">
+    <div class="page-eyebrow">Configurações</div>
+    <h1 class="h2 fw-bold mt-2 mb-1">Usuários</h1>
+    <p class="text-secondary mb-0">Cadastre contas e defina o nível de acesso de cada pessoa.</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <section class="card content-card h-100">
+        <div class="card-header bg-white p-4"><h2 class="h5 fw-bold mb-1">Novo usuário</h2><p class="small text-secondary mb-0">A senha inicial será definida neste cadastro.</p></div>
+        <div class="card-body p-4">
+          <% if @user.errors.any? %>
+            <div class="alert alert-danger"><ul class="mb-0"><% @user.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul></div>
+          <% end %>
+          <%= form_with model: [:admin, @user], local: true do |form| %>
+            <div class="mb-3"><%= form.label :name, "Nome", class: "form-label" %><%= form.text_field :name, required: true, autocomplete: "name", class: "form-control" %></div>
+            <div class="mb-3"><%= form.label :email, "E-mail", class: "form-label" %><%= form.email_field :email, required: true, autocomplete: "email", class: "form-control" %></div>
+            <div class="mb-3"><%= form.label :role, "Perfil de acesso", class: "form-label" %><%= form.select :role, [["Administrador", "admin"], ["Equipe", "staff"], ["Cliente", "client"]], {}, class: "form-select", required: true %></div>
+            <div class="mb-3"><%= form.label :password, "Senha", class: "form-label" %><%= form.password_field :password, required: true, autocomplete: "new-password", class: "form-control" %><div class="form-text">Mínimo de 6 caracteres.</div></div>
+            <div class="mb-4"><%= form.label :password_confirmation, "Confirmar senha", class: "form-label" %><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "form-control" %></div>
+            <%= form.submit "Criar usuário", class: "btn btn-primary w-100" %>
+          <% end %>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-lg-7">
+      <section class="card content-card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center p-4"><div><h2 class="h5 fw-bold mb-1">Contas cadastradas</h2><p class="small text-secondary mb-0">A lista inclui todos os perfis deste sistema.</p></div><span class="badge text-bg-light border fs-6"><%= @users.size %></span></div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light"><tr><th scope="col">Usuário</th><th scope="col">Perfil</th></tr></thead>
+            <tbody>
+              <% @users.each do |user| %>
+                <% role_label = { "admin" => "Administrador", "staff" => "Equipe", "client" => "Cliente" }.fetch(user.role) %>
+                <tr><td><div class="fw-semibold"><%= user.name.presence || "Sem nome" %></div><div class="small text-secondary"><%= user.email %></div></td><td><span class="badge text-bg-light border"><%= role_label %></span></td></tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>

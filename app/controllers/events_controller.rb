@@ -1,11 +1,11 @@
 class EventsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_event, only: %i[show edit update update_schedule destroy]
+  before_action :set_event, only: %i[show edit update update_schedule complete_follow_up]
   before_action :load_clients, only: %i[new create edit update]
   before_action :prepare_schedule, only: %i[show update_schedule]
 
   def index
-    @events = current_user.events.includes(:client, bookings: [:room, :services]).order(created_at: :desc)
+    @events = current_user.visible_events.includes(:client, bookings: [:room, :services]).order(created_at: :desc)
   end
 
   def show
@@ -60,19 +60,38 @@ class EventsController < ApplicationController
     end
   end
 
-  def destroy
-    @event.destroy!
-    redirect_to events_path, notice: "Evento removido com sucesso.", status: :see_other
+  def complete_follow_up
+    return redirect_to root_path, alert: "Este evento jÃ¡ foi confirmado ou cancelado." unless @event.follow_up_active?
+
+    next_date = Date.iso8601(params.require(:follow_up).fetch(:next_follow_up_on))
+    if next_date <= Date.current
+      return redirect_to root_path, alert: "A prÃ³xima data de follow-up deve ser posterior a hoje."
+    end
+
+    Event.transaction do
+      @event.follow_up_logs.create!(
+        user: current_user,
+        observation: params.require(:follow_up).fetch(:observation),
+        completed_on: Date.current,
+        next_follow_up_on: next_date
+      )
+      @event.update!(follow_up_on: next_date)
+    end
+    redirect_to root_path, notice: "Follow-up registrado. PrÃ³ximo contato agendado para #{next_date.strftime('%d/%m/%Y')}."
+  rescue Date::Error, KeyError, ActionController::ParameterMissing
+    redirect_to root_path, alert: "Informe a observaÃ§Ã£o e uma data vÃ¡lida para o prÃ³ximo follow-up."
+  rescue ActiveRecord::RecordInvalid => error
+    redirect_to root_path, alert: error.record.errors.full_messages.to_sentence
   end
 
   private
 
   def set_event
-    @event = current_user.events.find(params.expect(:id))
+    @event = current_user.visible_events.find(params.expect(:id))
   end
 
   def event_params
-    params.expect(event: %i[title description client_id requester_name requester_phone requester_email attendee_count setup_format])
+    params.expect(event: %i[title description client_id requester_name requester_phone requester_email attendee_count setup_format follow_up_on])
   end
 
   def schedule_params

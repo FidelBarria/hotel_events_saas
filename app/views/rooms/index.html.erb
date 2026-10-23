@@ -17,7 +17,14 @@
             <div class="card-body p-4 d-flex flex-column">
               <h2 class="h5 fw-bold"><%= link_to room.name, room, class: "link-dark link-underline-opacity-0 link-underline-opacity-75-hover" %></h2>
               <p class="text-secondary small flex-grow-1"><%= room.description.presence || "Espaço disponível para eventos e recepções." %></p>
-              <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-light border"><%= room.capacity %> pessoas</span><% if room.hourly_rate.present? %><span class="badge text-bg-success">R$ <%= number_with_precision(room.hourly_rate, precision: 2, delimiter: ".", separator: ",") %> / hora</span><% end %><% if room.daily_rate.present? %><span class="badge text-bg-light border">R$ <%= number_with_precision(room.daily_rate, precision: 2, delimiter: ".", separator: ",") %> / diária</span><% end %></div>
+              <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-light border">Geral: <%= room.capacity %> pessoas</span><% if room.hourly_rate.present? %><span class="badge text-bg-success">R$ <%= number_with_precision(room.hourly_rate, precision: 2, delimiter: ".", separator: ",") %> / hora</span><% end %><% if room.daily_rate.present? %><span class="badge text-bg-light border">R$ <%= number_with_precision(room.daily_rate, precision: 2, delimiter: ".", separator: ",") %> / diaria</span><% end %></div>
+              <div class="small text-secondary fw-semibold mb-2">Capacidade por montagem</div>
+              <div class="row g-2 mb-3">
+                <% Event::SETUP_FORMATS.each do |format, label| %>
+                  <% format_capacity = room.capacity_for(format) %>
+                  <div class="col-6"><div class="rounded-3 bg-light p-2 h-100"><div class="small text-secondary"><%= label %></div><div class="fw-bold"><%= format_capacity.present? && format_capacity.positive? ? "#{format_capacity} pessoas" : "Nao informado" %></div></div></div>
+                <% end %>
+              </div>
               <div class="d-flex align-items-center gap-2 border-top pt-3"><%= link_to "Ver detalhes", room, class: "btn btn-outline-primary btn-sm flex-grow-1" %><% if user_signed_in? %><%= link_to "Editar", edit_room_path(room), class: "btn btn-outline-secondary btn-sm" %><%= button_to "Excluir", room_path(room), method: :delete, data: { turbo_confirm: "Tem certeza que deseja remover #{room.name}?" }, class: "btn btn-outline-danger btn-sm" %><% end %></div>
             </div>
           </article>

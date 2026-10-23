@@ -11,6 +11,7 @@
     <div class="col-md-6"><%= form.label :requester_email, "E-mail do solicitante", class: "form-label" %><%= form.email_field :requester_email, required: true, class: "form-control", placeholder: "nome@empresa.com" %></div>
     <div class="col-md-3"><%= form.label :attendee_count, "Quantidade de pessoas", class: "form-label" %><%= form.number_field :attendee_count, min: 1, step: 1, required: true, class: "form-control", placeholder: "Ex.: 80" %></div>
     <div class="col-md-3"><%= form.label :setup_format, "Formato de montagem", class: "form-label" %><%= form.select :setup_format, Event::SETUP_FORMATS.map { |value, label| [label, value] }, { prompt: "Selecione" }, class: "form-select", required: true %></div>
+    <div class="col-md-6"><%= form.label :follow_up_on, "Data do próximo follow-up", class: "form-label" %><%= form.date_field :follow_up_on, class: "form-control" %><div class="form-text">Opcional. O evento aparecerá no painel nesta data enquanto estiver em negociação.</div></div>
     <div class="col-12"><%= form.label :description, "Observações", class: "form-label" %><%= form.text_area :description, rows: 3, class: "form-control", placeholder: "Informações iniciais sobre o evento (opcional)" %></div>
   </div>
 

@@ -1,10 +1,16 @@
 Rails.application.routes.draw do
-  resources :events do
+  resources :events, except: :destroy do
     patch :schedule, on: :member, action: :update_schedule
+    patch :complete_follow_up, on: :member
   end
   resources :services
   resources :rooms
   resources :clients, only: %i[index show new create edit update destroy]
+  get "monthly_goals", to: "monthly_goals#index", as: :monthly_goals
+  patch "monthly_goals", to: "monthly_goals#update_year"
+  namespace :admin, path: "configuracoes", as: "admin" do
+    resources :users, only: %i[index create], path: "usuarios"
+  end
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

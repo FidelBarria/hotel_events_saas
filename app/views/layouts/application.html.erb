@@ -42,6 +42,7 @@
               <%= link_to "Clientes", clients_path, class: "nav-link #{current_page?(clients_path) ? 'active' : ''}" %>
               <%= link_to "A&B", services_path(category: "food_beverage"), class: "nav-link #{params[:category] == 'food_beverage' ? 'active' : ''}" %>
               <%= link_to "Equipamentos", services_path(category: "equipment"), class: "nav-link #{params[:category] == 'equipment' ? 'active' : ''}" %>
+              <% if current_user.admin? %><%= link_to "Configurações", admin_users_path, class: "nav-link #{current_page?(admin_users_path) ? 'active' : ''}" %><% end %>
             </nav>
             <div class="d-flex align-items-center gap-3">
               <div class="text-end d-none d-sm-block"><div class="fw-semibold small"><%= current_user.name.presence || current_user.email %></div><div class="text-secondary small"><%= current_user.role.humanize %></div></div>

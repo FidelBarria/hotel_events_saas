@@ -1,0 +1,59 @@
+<% month_names = %w[Janeiro Fevereiro Março Abril Maio Junho Julho Agosto Setembro Outubro Novembro Dezembro] %>
+<% status_categories = [["Confirmado", "confirmado", "#15803d"], ["Cotação", "cotacao", "#7c3aed"], ["Em tentativa", "em_tentativa", "#0284c7"]] %>
+<% chart_left = 105 %>
+<% chart_top = 28 %>
+<% plot_height = 320 %>
+<% plot_width = 920 %>
+<% chart_bottom = chart_top + plot_height %>
+<% slot_width = plot_width.to_f / 12 %>
+<% bar_width = 15 %>
+<% bar_gap = 4 %>
+<% group_width = (bar_width * status_categories.length) + (bar_gap * (status_categories.length - 1)) %>
+<% maximum = @annual_revenue.map { |month| month[:statuses].values.map { |values| values[:total].to_f }.max || 0 }.max || 0 %>
+<% axis_step = [ (maximum / 4.0).ceil, 1 ].max %>
+<% axis_maximum = axis_step * 4 %>
+
+<section class="card content-card mt-4" aria-labelledby="annual-revenue-title">
+  <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 p-lg-4">
+    <div><div class="page-eyebrow">Receita por status</div><h2 class="h5 fw-bold mt-1 mb-0" id="annual-revenue-title">Desempenho anual · <%= @chart_year %></h2></div>
+    <nav class="d-flex gap-2" aria-label="Navegar entre anos do gráfico">
+      <%= link_to "← Ano anterior", root_path(chart_year: @chart_year - 1, goal_month: @goal_month.strftime("%Y-%m"), week: @week_start.iso8601, statuses: @selected_statuses), class: "btn btn-outline-secondary btn-sm", aria: { label: "Ver gráfico de #{@chart_year - 1}" } %>
+      <%= link_to "Próximo ano →", root_path(chart_year: @chart_year + 1, goal_month: @goal_month.strftime("%Y-%m"), week: @week_start.iso8601, statuses: @selected_statuses), class: "btn btn-outline-secondary btn-sm", aria: { label: "Ver gráfico de #{@chart_year + 1}" } %>
+    </nav>
+  </div>
+  <div class="card-body p-3 p-lg-4">
+    <p class="small text-secondary">Cada mês compara valores confirmados, em cotação e em tentativa. Passe o mouse sobre uma barra para ver o total e a divisão entre salas, equipamentos e A&amp;B.</p>
+    <div class="annual-chart-scroll">
+      <svg class="annual-revenue-chart" viewBox="0 0 1060 405" role="img" aria-labelledby="annual-chart-svg-title annual-chart-svg-desc">
+        <title id="annual-chart-svg-title">Receita mensal por status em <%= @chart_year %></title>
+        <desc id="annual-chart-svg-desc">Gráfico anual com três barras por mês: confirmado, cotação e em tentativa. O eixo vertical mostra valores em reais.</desc>
+        <% (0..4).each do |tick| %>
+          <% value = axis_step * tick %>
+          <% y = chart_bottom - (plot_height * tick / 4.0) %>
+          <line x1="<%= chart_left %>" y1="<%= y %>" x2="<%= chart_left + plot_width %>" y2="<%= y %>" class="annual-chart-gridline" />
+          <text x="<%= chart_left - 12 %>" y="<%= y + 4 %>" text-anchor="end" class="annual-chart-axis-label"><%= number_to_currency(value, unit: "R$ ", separator: ",", delimiter: ".", precision: 0) %></text>
+        <% end %>
+        <line x1="<%= chart_left %>" y1="<%= chart_top %>" x2="<%= chart_left %>" y2="<%= chart_bottom %>" class="annual-chart-axis" />
+        <line x1="<%= chart_left %>" y1="<%= chart_bottom %>" x2="<%= chart_left + plot_width %>" y2="<%= chart_bottom %>" class="annual-chart-axis" />
+        <% @annual_revenue.each_with_index do |month, index| %>
+          <% month_name = month_names[month[:month].month - 1] %>
+          <% month_x = chart_left + (slot_width * index) + ((slot_width - group_width) / 2) %>
+          <% status_categories.each_with_index do |(label, key, color), status_index| %>
+            <% values = month[:statuses][key] %>
+            <% amount = values[:total].to_f %>
+            <% bar_height = amount / axis_maximum * plot_height %>
+            <% bar_x = month_x + status_index * (bar_width + bar_gap) %>
+            <% bar_y = chart_bottom - bar_height %>
+            <rect x="<%= bar_x %>" y="<%= bar_y %>" width="<%= bar_width %>" height="<%= [bar_height, 1].max %>" fill="<%= color %>" rx="2" class="annual-chart-bar">
+              <title><%= month_name %> · <%= label %> · Salas: <%= number_to_currency(values[:rooms], unit: "R$ ", separator: ",", delimiter: ".") %> · Equipamentos: <%= number_to_currency(values[:equipment], unit: "R$ ", separator: ",", delimiter: ".") %> · A&amp;B: <%= number_to_currency(values[:food_beverage], unit: "R$ ", separator: ",", delimiter: ".") %> · Total: <%= number_to_currency(values[:total], unit: "R$ ", separator: ",", delimiter: ".") %></title>
+            </rect>
+          <% end %>
+          <text x="<%= chart_left + (slot_width * index) + slot_width / 2 %>" y="<%= chart_bottom + 25 %>" text-anchor="middle" class="annual-chart-month-label"><%= month_name[0, 3] %></text>
+        <% end %>
+      </svg>
+    </div>
+    <div class="annual-chart-legend" aria-label="Status do gráfico">
+      <% status_categories.each do |label, _key, color| %><span><i style="background-color: <%= color %>" aria-hidden="true"></i><%= label %></span><% end %>
+    </div>
+  </div>
+</section>

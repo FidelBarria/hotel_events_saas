@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_130000) do
   create_table "booking_services", force: :cascade do |t|
     t.integer "booking_id", null: false
     t.integer "service_id", null: false
@@ -51,16 +51,42 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_230000) do
     t.string "title"
     t.text "description"
     t.integer "user_id", null: false
+    t.integer "client_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "client_id"
     t.string "requester_name"
     t.string "requester_phone"
     t.string "requester_email"
     t.integer "attendee_count"
     t.string "setup_format"
+    t.date "follow_up_on"
     t.index ["client_id"], name: "index_events_on_client_id"
     t.index ["user_id"], name: "index_events_on_user_id"
+  end
+
+  create_table "follow_up_logs", force: :cascade do |t|
+    t.integer "event_id", null: false
+    t.integer "user_id", null: false
+    t.text "observation", null: false
+    t.date "completed_on", null: false
+    t.date "next_follow_up_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_follow_up_logs_on_event_id"
+    t.index ["user_id"], name: "index_follow_up_logs_on_user_id"
+  end
+
+  create_table "monthly_goals", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.date "month", null: false
+    t.decimal "rooms_target", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "equipment_target", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "food_beverage_target", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "total_target", precision: 12, scale: 2, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "month"], name: "index_monthly_goals_on_user_id_and_month", unique: true
+    t.index ["user_id"], name: "index_monthly_goals_on_user_id"
   end
 
   create_table "room_usages", force: :cascade do |t|
@@ -120,5 +146,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_230000) do
   add_foreign_key "bookings", "rooms"
   add_foreign_key "events", "clients"
   add_foreign_key "events", "users"
+  add_foreign_key "follow_up_logs", "events"
+  add_foreign_key "follow_up_logs", "users"
+  add_foreign_key "monthly_goals", "users"
   add_foreign_key "room_usages", "bookings"
 end
